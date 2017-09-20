@@ -134,7 +134,8 @@ coreos:
         BindIPv6Only=both
         [Install]
         WantedBy=sockets.target
-  write_files:
+
+write_files:
   - path: "/home/core/.toolboxrc"
     owner: core
     content: |
@@ -215,4 +216,3 @@ ssh_authorized_keys:
 {% for key in coreos_public_keys %}
   - {{ key }}
 {% endfor %}
-
