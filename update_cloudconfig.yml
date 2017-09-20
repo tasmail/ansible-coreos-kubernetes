@@ -6,17 +6,8 @@
   user: core
 
   roles:
-    - role: kubectl
-    #- role: etcd-certificates
     - role: etcd-certs-cfssl
-    - role: kubernetes-certificates
-    - role: kubectl-config
     - role: extra-cas
-    - ceph-on-kubernetes-config
-    #- ceph-on-kubernetes-resources
     - role: cloud-config
-    #- role: drain
-    #- { role: unsafe_reboot, unsafe_reboot_dealay=900 }
     - role: safe_reboot
-    - calico
- 
+

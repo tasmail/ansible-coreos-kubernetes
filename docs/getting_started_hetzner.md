@@ -113,7 +113,6 @@ Your inventory shuld now look like this:
      176.9.118.230
 
      [all:vars]
-     #kube_master_dns_name=kubemaster.bettertest.de
      hyperkube_aci=quay.io/cornelius/hyperkube
      hyperkube_aci_tag=v1.4.4_coreos.0
      kube_master_ip=176.9.123.237

@@ -14,35 +14,9 @@
   gather_facts: no
 
   roles:
-    #- role: etcd-certificates
     - role: etcd-certs-cfssl
     - role: extra-cas
     - { role: install-coreos,  ansible_python_interpreter: /usr/bin/python }
-    - role: kubernetes-certificates
-    - role: ceph-on-kubernetes-config
     - { role: ansible-coreos-bootstrap, ansible_ssh_user: core   }
     - { role: cloud-config, clear_etcd_data: true, ansible_ssh_user: core  }
     - { role: unsafe_reboot, unsafe_reboot_dealay: 1, ansible_ssh_user: core }
-
-- name: configure install and configure kubectl and install dns adonn
-  hosts: kubernetes
-  gather_facts: no
-  vars:
-      ansible_python_interpreter: /usr/bin/python
-  pre_tasks:
-      - name: wait for kubernetes master to come up
-        delegate_to: localhost
-        connection: local
-        when: inventory_hostname in groups['kubernetes-master']
-        wait_for:
-          host: "{{ inventory_hostname }}"
-          port: 6443
-          timeout: 900
-  roles:
-    - role: kubectl
-    - role: kubectl-config
-    - role: k8s-kubesystem-namespace
-    - { role: k8s-dns-addon   }
-    - { role: ceph-on-kubernetes-resources, ansible_ssh_user: core, ansible_python_interpreter: /home/core/pypy/bin/python   }
-    - role: calico
-#   - role: loadbalancer
