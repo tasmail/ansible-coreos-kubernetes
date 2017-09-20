@@ -13,13 +13,6 @@ coreos:
     etcd_certfile: /etc/ssl/etcd/key.crt
     etcd_keyfile: /etc/ssl/etcd/key.key
   units:
-{% if gateway is defined and route_destination is defined %}
-    - name: 10-static.network
-      content: |
-        [Route]
-        Gateway={{ gateway }}
-        Destination={{ route_destination }}
-{% endif  %}
     - name: serial-getty@ttyS1.service
       command: start
       enable: true
@@ -30,7 +23,9 @@ coreos:
         - name: 40-etcd-cluster.conf
           content: |
             [Service]
-            ExecStartPre=/usr/bin/route
+{% if gateway is defined and route_destination is defined %}
+            ExecStartPre=/usr/bin/route add -net {{ route_destination }} gw {{ gateway }}
+{% endif  %}
 {% if etcd_image_tag is defined %}
             Environment="ETCD_IMAGE_TAG={{ etcd_image_tag }}"
 {% endif  %}
