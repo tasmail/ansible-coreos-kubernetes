@@ -33,6 +33,7 @@ coreos:
     {% if inventory_hostname in groups['etcd-proxy'] %}
             Environment="ETCD_PROXY=on"
     {% endif %}
+
     - name: flanneld.service
       enable: true
       command: start
@@ -88,6 +89,7 @@ coreos:
         Address={{ ip }}
 {% endfor %}
 {% endif  %}
+
     - name: iptables-restore.service
       command: start
       enable: true
@@ -154,12 +156,14 @@ coreos:
     content: vm.max_map_count=65535
   {% if extra_cas.results is defined %}
   {% for item in extra_cas.results %}
+
   - path: /etc/ssl/certs/{{ item.item|basename }}
     encoding: base64
     content: |
       {{ item.content|indent(width=6) }}
   {% endfor %}
   {% endif %}
+
   - path: /opt/bin/wupiao
     permissions: '0755'
     content: |
@@ -174,14 +178,17 @@ coreos:
     permissions: 0644
     content: |
       {{ etcd_ca_certificate|indent(width=6) }}
+
   - path: /etc/ssl/etcd/key.crt
     permissions: 0644
     content: |
       {{ etcd_cert|indent(width=6) }}
+
   - path: /etc/ssl/etcd/key.key
     permissions: 0644
     content: |
       {{ etcd_key|indent(width=6) }}
+
   - path: /var/lib/iptables/rules-save
     permissions: 0644
     owner: root:root
@@ -208,3 +215,4 @@ ssh_authorized_keys:
 {% for key in coreos_public_keys %}
   - {{ key }}
 {% endfor %}
+
