@@ -1,3 +1,4 @@
 ---
 coreos_channel: stable
+coreos_reboot_strategy: off
 coreos_public_keys: []

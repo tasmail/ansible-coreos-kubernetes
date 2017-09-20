@@ -7,8 +7,7 @@ ssh_authorized_keys:
   - {{ key }}
 {% endfor %}
 
-
-
 coreos:
   update:
-    reboot-strategy: reboot
+    group: "{{coreos_channel}}"
+    reboot-strategy: "{{coreos_reboot_strategy}}"
