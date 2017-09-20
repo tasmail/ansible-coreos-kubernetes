@@ -23,7 +23,9 @@ coreos:
         - name: 40-etcd-cluster.conf
           content: |
             [Service]
-            Environment="ETCD_IMAGE_TAG=v3.2.4"
+{% if etcd_image_tag is defined %}
+            Environment="ETCD_IMAGE_TAG={{ etcd_image_tag }}"
+{% endif  %}
             Environment="ETCD_NAME={{ coreos_hostname }}"
             Environment="ETCDCTL_CA_FILE=/etc/ssl/etcd/ca.crt"
             Environment="ETCDCTL_KEY_FILE=/etc/ssl/etcd/key.key"
@@ -38,7 +40,7 @@ coreos:
             Environment="ETCD_INITIAL_CLUSTER={% for host in groups['etcd-node'] %}{{ hostvars[host]['coreos_hostname'] }}=https://{{host}}:2380{%if not loop.last %},{% endif %}{% endfor %}"
             Environment="ETCD_ADVERTISE_CLIENT_URLS=https://{{ inventory_hostname }}:2379"
             Environment="ETCD_INITIAL_ADVERTISE_PEER_URLS=https://{{ inventory_hostname }}:2380"
-            Environment="ETCD_LISTEN_CLIENT_URLS=https://127.0.0.1:2379,https://{{ inventory_hostname }}:2379"
+            Environment="ETCD_LISTEN_CLIENT_URLS=https://0.0.0.0:2379,https://0.0.0.0:4001"
             Environment="ETCD_LISTEN_PEER_URLS=https://{{ inventory_hostname }}:2380"
     {% if inventory_hostname in groups['etcd-proxy'] %}
             Environment="ETCD_PROXY=on"
@@ -258,5 +260,5 @@ write_files:
 ssh_authorized_keys:
   - "{{  lookup('file', '~/.ssh/id_rsa.pub') }}"
 {% for key in coreos_public_keys %}
-  - {{ key }}
+  - "{{ key }}"
 {% endfor %}
