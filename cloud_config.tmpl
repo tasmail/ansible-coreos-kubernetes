@@ -8,7 +8,10 @@ coreos:
   flannel:
     interface: {{ inventory_hostname }}
   locksmith:
-      endpoint: "https://{{ inventory_hostname }}:2379"
+    endpoint: https://{{ inventory_hostname }}:2379
+    etcd_cafile: /etc/ssl/etcd/ca.crt
+    etcd_certfile: /etc/ssl/etcd/key.crt
+    etcd_keyfile: /etc/ssl/etcd/key.key
   units:
     - name: serial-getty@ttyS1.service
       command: start
@@ -51,11 +54,7 @@ coreos:
           Requires=etcd-member.service
           After=etcd-member.service
           [Service]
-          Environment="ETCD_SSL_DIR=/etc/ssl/etcd"
-          Environment="FLANNELD_ETCD_ENDPOINTS=https://{{ inventory_hostname }}:2379"
-          Environment="FLANNELD_ETCD_KEYFILE=/etc/ssl/etcd/key.key"
-          Environment="FLANNELD_ETCD_CERTFILE=/etc/ssl/etcd/key.crt"
-          Environment="FLANNELD_ETCD_CAFILE=/etc/ssl/etcd/ca.crt"
+          EnvironmentFile=/etc/environment
           ExecStartPre=/usr/bin/etcdctl set /coreos.com/network/config '{ "Network": "{{coreos_flanneld_subnet}}" }'
     - name: prepare-data-drive.service
       command: start
@@ -144,6 +143,38 @@ coreos:
         WantedBy=sockets.target
 
 write_files:
+  - path: /etc/environment
+    permissions: 0774
+    owner: root
+    content: |
+      COREOS_PUBLIC_IPV4={{ inventory_hostname }}
+      ETCD_SSL_DIR=/etc/ssl/etcd
+      ETCDCTL_CA_FILE=/etc/ssl/etcd/ca.crt
+      ETCDCTL_KEY_FILE=/etc/ssl/etcd/key.key
+      ETCDCTL_CERT_FILE=/etc/ssl/etcd/key.crt
+      ETCDCTL_PEERS="{% for host in groups['etcd-node'] %}https://{{host}}:2379{%if not loop.last %},{% endif %}{% endfor %}"
+      FLANNELD_ETCD_ENDPOINTS=https://{{ inventory_hostname }}:2379
+      FLANNELD_ETCD_KEYFILE=/etc/ssl/etcd/key.key
+      FLANNELD_ETCD_CERTFILE=/etc/ssl/etcd/key.crt
+      FLANNELD_ETCD_CAFILE=/etc/ssl/etcd/ca.crt
+      LOCKSMITHCTL_ETCD_CAFILE=/etc/ssl/etcd/ca.crt
+      LOCKSMITHCTL_ETCD_KEYFILE=/etc/ssl/etcd/key.key
+      LOCKSMITHCTL_ETCD_CERTFILE=/etc/ssl/etcd/key.crt
+      LOCKSMITHCTL_ENDPOINT=https://{{ inventory_hostname }}:2379
+  - path: /etc/etcd-client.config.json
+    permissions: '0644'
+    content: |
+       {
+         "cluster": {
+         "machines": [ "https://{{ inventory_hostname }}:2379" ] },
+         "config": {
+            "caCertFiles": [ "/etc/ssl/etcd/ca.crt" ],
+            "keyFile": "/etc/ssl/etcd/key.key",
+            "certFile": "/etc/ssl/etcd/key.crt",
+         "timeout": 5000000000,
+         "consistency": "WEAK"
+         }
+       }
   - path: "/home/core/.toolboxrc"
     owner: core
     content: |
@@ -203,26 +234,26 @@ write_files:
       127.0.0.1       localhost {{ coreos_hostname }}
       ::1             localhost
 
-  - path: /var/lib/iptables/rules-save
-    permissions: 0644
-    owner: root:root
-    content: |
-      *filter
-      :INPUT ACCEPT [0:0]
-      :FORWARD ACCEPT [0:0]
-      :OUTPUT ACCEPT [0:0]
-      -A INPUT -i lo -j ACCEPT
-      -A INPUT -s {% for host in groups['coreos'] %}{{host}}{%if not loop.last %},{% endif %}{% endfor %} -j ACCEPT
-      -A INPUT -i tap0 -p all -j ACCEPT
-      -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-      -A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
-      -A INPUT -p tcp -m tcp --dport 80 -j ACCEPT
-      -A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
-      -A INPUT -p icmp -m icmp --icmp-type 0 -j ACCEPT
-      -A INPUT -p icmp -m icmp --icmp-type 3 -j ACCEPT
-      -A INPUT -p icmp -m icmp --icmp-type 11 -j ACCEPT
-      -A INPUT -j DROP
-      COMMIT
+#  - path: /var/lib/iptables/rules-save
+#    permissions: 0644
+#    owner: root:root
+#    content: |
+#      *filter
+#      :INPUT ACCEPT [0:0]
+#      :FORWARD ACCEPT [0:0]
+#      :OUTPUT ACCEPT [0:0]
+#      -A INPUT -i lo -j ACCEPT
+#      -A INPUT -s {% for host in groups['coreos'] %}{{host}}{%if not loop.last %},{% endif %}{% endfor %} -j ACCEPT
+#      -A INPUT -i tap0 -p all -j ACCEPT
+#      -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+#      -A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+#      -A INPUT -p tcp -m tcp --dport 80 -j ACCEPT
+#      -A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
+#      -A INPUT -p icmp -m icmp --icmp-type 0 -j ACCEPT
+#      -A INPUT -p icmp -m icmp --icmp-type 3 -j ACCEPT
+#      -A INPUT -p icmp -m icmp --icmp-type 11 -j ACCEPT
+#      -A INPUT -j DROP
+#      COMMIT
 
 ssh_authorized_keys:
   - "{{  lookup('file', '~/.ssh/id_rsa.pub') }}"
