@@ -7,6 +7,8 @@ coreos:
     reboot-strategy: "{{coreos_reboot_strategy}}"
   flannel:
     interface: {{ inventory_hostname }}
+  locksmith:
+      endpoint: "https://{{ inventory_hostname }}:2379"
   units:
     - name: serial-getty@ttyS1.service
       command: start
@@ -19,12 +21,17 @@ coreos:
           content: |
             [Service]
             Environment="ETCD_IMAGE_TAG=v3.2.4"
+            Environment="ETCD_NAME={{ coreos_hostname }}"
             Environment="ETCDCTL_CA_FILE=/etc/ssl/etcd/ca.crt"
             Environment="ETCDCTL_KEY_FILE=/etc/ssl/etcd/key.key"
             Environment="ETCDCTL_CERT_FILE=/etc/ssl/etcd/key.crt"
-            Environment="ETCD_PEER_CA_FILE=/etc/ssl/etcd/ca.crt"
-            Environment="ETCD_PEER_CERT_FILE=/etc/ssl/etcd/key.crt"
-            Environment="ETCD_PEER_KEY_FILE=/etc/ssl/etcd/key.key"
+            Environment="ETCD_SSL_DIR=/etc/ssl/etcd"
+            Environment="ETCD_PEER_CA_FILE=/etc/ssl/certs/ca.crt"
+            Environment="ETCD_PEER_CERT_FILE=/etc/ssl/certs/key.crt"
+            Environment="ETCD_PEER_KEY_FILE=/etc/ssl/certs/key.key"
+            Environment="ETCD_CA_FILE=/etc/ssl/certs/ca.crt"
+            Environment="ETCD_CERT_FILE=/etc/ssl/certs/key.crt"
+            Environment="ETCD_KEY_FILE=/etc/ssl/certs/key.key"
             Environment="ETCD_INITIAL_CLUSTER={% for host in groups['etcd-node'] %}{{ hostvars[host]['coreos_hostname'] }}=https://{{host}}:2380{%if not loop.last %},{% endif %}{% endfor %}"
             Environment="ETCD_ADVERTISE_CLIENT_URLS=https://{{ inventory_hostname }}:2379"
             Environment="ETCD_INITIAL_ADVERTISE_PEER_URLS=https://{{ inventory_hostname }}:2380"
@@ -44,6 +51,7 @@ coreos:
           Requires=etcd-member.service
           After=etcd-member.service
           [Service]
+          Environment="ETCD_SSL_DIR=/etc/ssl/etcd"
           Environment="FLANNELD_ETCD_ENDPOINTS=https://{{ inventory_hostname }}:2379"
           Environment="FLANNELD_ETCD_KEYFILE=/etc/ssl/etcd/key.key"
           Environment="FLANNELD_ETCD_CERTFILE=/etc/ssl/etcd/key.crt"
@@ -189,6 +197,11 @@ write_files:
     permissions: 0644
     content: |
       {{ etcd_key|indent(width=6) }}
+
+  - path: /etc/hosts
+    content: |
+      127.0.0.1       localhost {{ coreos_hostname }}
+      ::1             localhost
 
   - path: /var/lib/iptables/rules-save
     permissions: 0644
