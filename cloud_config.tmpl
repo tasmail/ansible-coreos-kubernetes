@@ -13,6 +13,13 @@ coreos:
     etcd_certfile: /etc/ssl/etcd/key.crt
     etcd_keyfile: /etc/ssl/etcd/key.key
   units:
+{% if gateway is defined and route_destination is defined %}
+    - name: 10-static.network
+      content: |
+        [Route]
+        Gateway={{ gateway }}
+        Destination={{ route_destination }}
+{% endif  %}
     - name: serial-getty@ttyS1.service
       command: start
       enable: true
