@@ -1,5 +1,6 @@
 ---
 clear_etcd_data: false
+etcd_image_tag: v3.2.4
 cluster_only_ports:
     - 4194
     - 9100

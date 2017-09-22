@@ -1,4 +1,8 @@
 ---
 coreos_channel: stable
 coreos_reboot_strategy: off
+coreos_timezone: UTC
+coreos_flanneld_subnet: 10.1.0.0/16
+coreos_toolbox_docker_image: debian
+coreos_toolbox_docker_tag: stable
 coreos_public_keys: []
