@@ -95,9 +95,9 @@ coreos:
         Environment="KV_TYPE=etcd"
         Environment="KV_IP={{ inventory_hostname }}"
         Environment="KV_PORT=2379"
-        Environment="KV_CA_CERT=/etc/ssl/etcd-ca.crt"
-        Environment="KV_CLIENT_CERT=/etc/ssl/etcd-client.crt"
-        Environment="KV_CLIENT_KEY=/etc/ssl/etcd-client.key"
+        Environment="KV_CA_CERT=/etc/ssl/ca.crt"
+        Environment="KV_CLIENT_CERT=/etc/ssl/key.crt"
+        Environment="KV_CLIENT_KEY=/etc/ssl/key.key"
         Environment="OSD_DEVICE=/dev/{{ ceph_osd_device }}"
         EnvironmentFile=/etc/environment
         ExecStartPre=/usr/bin/mkdir -p /var/lib/ceph/mon
