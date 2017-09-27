@@ -91,6 +91,7 @@ coreos:
 
         [Service]
         Environment="OSD_NAME={{ ceph_osd_device }}.osd.{{ coreos_hostname }}"
+        Environment="CEPH_PUBLIC_NETWORK={{ ceph_public_network }}"
         Environment="KV_TYPE=etcd"
         Environment="KV_IP={{ inventory_hostname }}"
         Environment="KV_PORT=2379"
@@ -138,6 +139,8 @@ coreos:
 
         [Service]
         Environment="MON_NAME={{ coreos_hostname }}"
+        Environment="CEPH_PUBLIC_NETWORK={{ ceph_public_network }}"
+        Environment="MON_IP={{ inventory_hostname }}"
         Environment="KV_TYPE=etcd"
         Environment="KV_IP={{ inventory_hostname }}"
         Environment="KV_PORT=2379"
