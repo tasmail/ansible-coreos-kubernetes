@@ -77,7 +77,7 @@ coreos:
         [Service]
         Type=oneshot
         RemainAfterExit=yes
-        ExecStart=dd if=/dev/zero of=/dev/{{ ceph_osd_device }} bs=512 count=1 conv=notrunc
+        ExecStart=/usr/bin/dd if=/dev/zero of=/dev/{{ ceph_osd_device }} bs=512 count=1 conv=notrunc
         ExecStart=/usr/sbin/wipefs -f /dev/{{ ceph_osd_device }}
         ExecStart=/usr/sbin/parted -s -a opt /dev/{{ ceph_osd_device }} mklabel gpt -- mkpart primary ext4 2048s -1
         ExecStart=/usr/sbin/parted -s /dev/{{ ceph_osd_device }} align-check optimal 1
@@ -87,7 +87,7 @@ coreos:
       content: |
         [Unit]
         Description=Ceph Object Storage Daemon ({{ ceph_osd_device }})
-        After=network.target etcd-member.service
+        After=network.target etcd-member.service prepare-data-drive-{{ ceph_osd_device }}.service
 
         [Service]
         Environment="OSD_NAME={{ ceph_osd_device }}.osd.{{ coreos_hostname }}"
@@ -216,6 +216,14 @@ coreos:
             After=flanneld.service
             [Service]
             EnvironmentFile=/etc/kubernetes/cni/docker_opts_cni.env
+      content: |
+    - name: docker.socket
+      command: start
+      drop-ins:
+        - name: 30-ListenStream.conf
+        content: |
+        [Socket]
+        ListenStream=2375
     - name: docker-tcp.socket
       command: start
       enable: true
