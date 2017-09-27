@@ -16,17 +16,6 @@
      sync' /tmp/coreos-install
      /tmp/coreos-install -d /dev/sda -C {{ coreos_channel }} -c /tmp/cloud-config.yaml
 
-- name: clear osd disk 
-  command: dd if=/dev/zero of={{ ceph_osd_device }} bs=512 count=1 conv=notrunc
-  when: ceph_osd_device is defined
-
-- name: create new partintion table on osd disk
-  shell: |
-      echo "g
-      w" | fdisk {{ ceph_osd_device }}
-  when: ceph_osd_device is defined
-  ignore_errors: true
-
 - name: reboot server
   shell: sleep 5 && reboot &
   args:

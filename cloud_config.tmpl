@@ -61,34 +61,115 @@ coreos:
           [Service]
           EnvironmentFile=/etc/environment
           ExecStartPre=/usr/bin/etcdctl set /coreos.com/network/config '{ "Network": "{{coreos_flanneld_subnet}}" }'
-    - name: prepare-data-drive.service
+
+{% if inventory_hostname in groups['ceph'] %}
+{% if ceph_osd_devices is defined %}
+{% for ceph_osd_device in ceph_osd_devices.split(';') %}
+    - name: prepare-data-drive-{{ ceph_osd_device }}.service
       command: start
       enable: true
       content: |
         [Unit]
         Description=Prepare data drive
-        Ater=dev-sdb.device
-        Requires=dev-sdb.device
-        ConditionPathExists=!/dev/sdb1
+        Ater=dev-{{ ceph_osd_device }}.device
+        Requires=dev-{{ ceph_osd_device }}.device
+        ConditionPathExists=!{{ ceph_osd_device }}1
         [Service]
         Type=oneshot
         RemainAfterExit=yes
-        ExecStart=/usr/sbin/wipefs -f /dev/sdb
-        ExecStart=/usr/sbin/parted -s -a opt /dev/sdb mklabel gpt -- mkpart primary ext4 2048s -1
-        ExecStart=/usr/sbin/parted -s /dev/sdb align-check optimal 1
-        ExecStart=/usr/sbin/mkfs.ext4 -m 1 -F /dev/sdb1
-    - name: mnt-data.mount
+        ExecStart=dd if=/dev/zero of=/dev/{{ ceph_osd_device }} bs=512 count=1 conv=notrunc
+        ExecStart=/usr/sbin/wipefs -f /dev/{{ ceph_osd_device }}
+        ExecStart=/usr/sbin/parted -s -a opt /dev/{{ ceph_osd_device }} mklabel gpt -- mkpart primary ext4 2048s -1
+        ExecStart=/usr/sbin/parted -s /dev/{{ ceph_osd_device }} align-check optimal 1
+    - name: ceph-osd-{{ ceph_osd_device }}.service
       command: start
       enable: true
       content: |
         [Unit]
-        After=prepare-data-drive.service
-        Requires=prepare-data-drive.service
-        [Mount]
-        What=/dev/sdb1
-        Where=/mnt/data
-        Type=ext4
-        Options=rw,noatime,nodiratime,discard,data=ordered
+        Description=Ceph Object Storage Daemon ({{ ceph_osd_device }})
+        After=network.target etcd-member.service
+
+        [Service]
+        Environment="OSD_NAME={{ ceph_osd_device }}.osd.{{ coreos_hostname }}"
+        Environment="KV_TYPE=etcd"
+        Environment="KV_IP={{ inventory_hostname }}"
+        Environment="KV_PORT=2379"
+        Environment="KV_CA_CERT=/etc/ssl/etcd-ca.crt"
+        Environment="KV_CLIENT_CERT=/etc/ssl/etcd-client.crt"
+        Environment="KV_CLIENT_KEY=/etc/ssl/etcd-client.key"
+        Environment="OSD_DEVICE=/dev/{{ ceph_osd_device }}"
+        EnvironmentFile=/etc/environment
+        ExecStartPre=/usr/bin/mkdir -p /var/lib/ceph/mon
+        ExecStartPre=/usr/bin/mkdir -p /etc/ceph
+        ExecStartPre=/usr/bin/mkdir -p /etc/ganesha
+        ExecStart=/usr/bin/rkt run --net=host --inherit-env \
+           --trust-keys-from-https \
+           --volume volume-var-lib-ceph,kind=host,source=/var/lib/ceph \
+           --volume volume-etc-ceph,kind=host,source=/etc/ceph \
+           --volume volume-etc-ganesha,kind=host,source=/etc/ganesha \
+           --volume volume-etc-ssl,kind=host,source=/etc/ssl/certs \
+           --mount volume=volume-etc-ganesha,target=/etc/ganesha \
+           --mount volume=volume-var-lib-ceph,target=/var/lib/ceph \
+           --mount volume=volume-etc-ceph,target=/etc/ceph \
+           --mount volume=volume-etc-ssl,target=/etc/ssl \
+           --stage1-name=coreos.com/rkt/stage1-fly:1.26.0 \
+           {{ ceph_image }}:{{ ceph_version }} \
+           --caps-retain=CAP_NET_ADMIN,CAP_NET_BIND_SERVICE,CAP_SETGID,CAP_SETUID,CAP_NET_RAW \
+           -- \
+           osd
+        Restart=always
+        RestartSec=10s
+        TimeoutStartSec=100
+        TimeoutStopSec=15
+
+        [Install]
+        WantedBy=multi-user.target
+
+{% endfor %}
+{% endif %}
+
+    - name: ceph-mon.service
+      command: start
+      enable: true
+      content: |
+        [Unit]
+        Description=Ceph Monitor Daemon
+        After=network.target etcd-member.service
+
+        [Service]
+        Environment="MON_NAME={{ coreos_hostname }}"
+        Environment="KV_TYPE=etcd"
+        Environment="KV_IP={{ inventory_hostname }}"
+        Environment="KV_PORT=2379"
+        Environment="KV_CA_CERT=/etc/ssl/ca.crt"
+        Environment="KV_CLIENT_CERT=/etc/ssl/key.crt"
+        Environment="KV_CLIENT_KEY=/etc/ssl/key.key"
+        EnvironmentFile=/etc/environment
+        ExecStartPre=/usr/bin/mkdir -p /var/lib/ceph/mon
+        ExecStartPre=/usr/bin/mkdir -p /etc/ceph
+        ExecStartPre=/usr/bin/mkdir -p /etc/ganesha
+        ExecStart=/usr/bin/rkt run --net=host --inherit-env \
+           --trust-keys-from-https \
+           --volume volume-var-lib-ceph,kind=host,source=/var/lib/ceph \
+           --volume volume-etc-ceph,kind=host,source=/etc/ceph \
+           --volume volume-etc-ganesha,kind=host,source=/etc/ganesha \
+           --volume volume-etc-ssl,kind=host,source=/etc/ssl/certs \
+           --mount volume=volume-etc-ganesha,target=/etc/ganesha \
+           --mount volume=volume-var-lib-ceph,target=/var/lib/ceph \
+           --mount volume=volume-etc-ceph,target=/etc/ceph \
+           --mount volume=volume-etc-ssl,target=/etc/ssl \
+           --stage1-name=coreos.com/rkt/stage1-fly:1.26.0 \
+           {{ ceph_image }}:{{ ceph_version }} \
+           --caps-retain=CAP_NET_ADMIN,CAP_NET_BIND_SERVICE,CAP_SETGID,CAP_SETUID,CAP_NET_RAW \
+           -- \
+           mon
+        Restart=always
+        RestartSec=10s
+        TimeoutStartSec=100
+        TimeoutStopSec=15
+
+{% endif %}
+
     - name: "00-wired.network"
       runtime: true
       content: |
@@ -138,8 +219,9 @@ coreos:
       content: |
         [Unit]
         Description=Docker Socket for the API
-        After=mnt-data.mount
-        Requires=mnt-data.mount
+        After=docker.service
+        Requires=docker.service
+
         [Socket]
         ListenStream=2375
         Service=docker.service
@@ -238,6 +320,29 @@ write_files:
     content: |
       127.0.0.1       localhost {{ coreos_hostname }}
       ::1             localhost
+
+{% if inventory_hostname in groups['ceph'] %}
+  - path: /opt/bin/ceph
+    permissions: '0775'
+    content: |
+      #!/bin/sh
+      /usr/bin/docker run --rm -i --net=host -v /etc/ceph:/etc/ceph ceph/base ceph "$@"
+  - path: /opt/bin/ceph-disk
+    permissions: '0775'
+    content: |
+      #!/bin/sh
+      /usr/bin/docker run --rm --privileged=true -i --net=host -v /etc/ceph:/etc/ceph -v /dev:/dev ceph/base ceph-disk "$@"
+  - path: /opt/bin/rados
+    permissions: '0775'
+    content: |
+      #!/bin/sh
+      /usr/bin/docker run --rm -i  --net=host -v /etc/ceph:/etc/ceph ceph/base rados "$@"
+  - path: /opt/bin/rdb
+    permissions: '0775'
+    content: |
+      #!/bin/sh
+      /usr/bin/docker run --rm -i --net=host -v /dev:/dev -v /sys:/sys --net=host --privileged=true -v /etc/ceph:/etc/ceph ceph/base rbd "$@"
+{% endif %}
 
   - path: /var/lib/iptables/rules-save
     permissions: 0644

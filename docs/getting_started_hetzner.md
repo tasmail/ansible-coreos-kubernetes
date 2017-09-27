@@ -113,25 +113,13 @@ Your inventory shuld now look like this:
      176.9.118.230
 
      [all:vars]
-     hyperkube_aci=quay.io/cornelius/hyperkube
-     hyperkube_aci_tag=v1.4.4_coreos.0
      kube_master_ip=176.9.123.237
      kube_cluster_name=privat
-     kubernetes_version=1.4.4
-     k8s_service_ip_range=10.100.0.0/16
-     k8s_service_ip=10.100.0.1
-     k8s_dns_service_ip=10.100.0.10
-     k8s_dns_domain=cluster.local
      hetzner_webservice_username=#ws+7FPjagF7
      hetzner_webservice_password=justforthedemo
      baremetal_provider=hetzner
-     kubectl_checksum=1ffbcfdec9961093b5fb1eec0b65f37af71a825dafff733de90d6ed6db647729
      ansible_python_interpreter=/home/core/pypy/bin/python
-     ceph_fsid=3867334c-2a6d-4468-b970-c878f0d36fee
-     ceph_key=AQCBK2FYAAAAABAAxcEwUSSPc7Zt1VJ9fjYH8A==
-     ceph_osd_dir=/home/core/data/ceph/osd
-     ceph_osd_type=osd_disk
-     ceph_osd_device=/dev/sdb
+     ceph_osd_devices=sdb
      rescue_authorized_key=21:74:2f:a4:08:8d:7c:83:bc:b4:3a:8a:5a:bd:3e:5f
 
 # bootsrap your coreos cluster
