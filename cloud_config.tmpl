@@ -90,7 +90,7 @@ coreos:
            --volume volume-var-lib-ceph,kind=host,source=/var/lib/ceph \
            --volume volume-etc-ceph,kind=host,source=/etc/ceph \
            --volume volume-etc-ganesha,kind=host,source=/etc/ganesha \
-           --volume volume-etc-ssl,kind=host,source=/etc/ssl/certs \
+           --volume volume-etc-ssl,kind=host,source=/etc/ssl/etcd,readOnly=true \
            --mount volume=volume-etc-ganesha,target=/etc/ganesha \
            --mount volume=volume-var-lib-ceph,target=/var/lib/ceph \
            --mount volume=volume-etc-ceph,target=/etc/ceph \
@@ -152,7 +152,7 @@ coreos:
            --volume volume-var-lib-ceph,kind=host,source=/var/lib/ceph \
            --volume volume-etc-ceph,kind=host,source=/etc/ceph \
            --volume volume-etc-ganesha,kind=host,source=/etc/ganesha \
-           --volume volume-etc-ssl,kind=host,source=/etc/ssl/certs \
+           --volume volume-etc-ssl,kind=host,source=/etc/ssl/etcd,readOnly=true \
            --mount volume=volume-etc-ganesha,target=/etc/ganesha \
            --mount volume=volume-var-lib-ceph,target=/var/lib/ceph \
            --mount volume=volume-etc-ceph,target=/etc/ceph \
