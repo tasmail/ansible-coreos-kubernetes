@@ -142,6 +142,16 @@ coreos:
         Environment="KV_CA_CERT=/etc/ssl/ca.crt"
         Environment="KV_CLIENT_CERT=/etc/ssl/key.crt"
         Environment="KV_CLIENT_KEY=/etc/ssl/key.key"
+{% if ceph_osd_force_zap is defined %}
+        Environment="OSD_FORCE_ZAP={{ ceph_osd_force_zap }}"
+{% endif %}
+{% if ceph_osd_journal_dir is defined %}
+        Environment="OSD_JOURNAL={{ ceph_osd_journal_dir }}.{{ ceph_osd_device }}"
+        ExecStartPre=/usr/bin/mkdir -p {{ ceph_osd_journal_dir }}.{{ ceph_osd_device }}
+{% endif %}
+{% if ceph_osd_journal_size is defined %}
+        Environment="OSD_JOURNAL_SIZE={{ ceph_osd_journal_size }}"
+{% endif %}
         Environment="OSD_DEVICE=/dev/{{ ceph_osd_device }}"
         EnvironmentFile=/etc/environment
         ExecStartPre=/usr/bin/mkdir -p /var/lib/ceph/mon
@@ -153,6 +163,10 @@ coreos:
            --volume volume-etc-ceph,kind=host,source=/etc/ceph \
            --volume volume-etc-ganesha,kind=host,source=/etc/ganesha \
            --volume volume-etc-ssl,kind=host,source=/etc/ssl/etcd,readOnly=true \
+{% if ceph_osd_journal_dir is defined %}
+            --volume volume-osd-journal,kind=host,source={{ ceph_osd_journal_dir }}.{{ ceph_osd_device }} \
+            --mount volume=osd-journal,target={{ ceph_osd_journal_dir }}.{{ ceph_osd_device }} \
+{% endif %}
            --mount volume=volume-etc-ganesha,target=/etc/ganesha \
            --mount volume=volume-var-lib-ceph,target=/var/lib/ceph \
            --mount volume=volume-etc-ceph,target=/etc/ceph \
