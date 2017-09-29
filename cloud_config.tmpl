@@ -164,8 +164,8 @@ coreos:
            --volume volume-etc-ganesha,kind=host,source=/etc/ganesha \
            --volume volume-etc-ssl,kind=host,source=/etc/ssl/etcd,readOnly=true \
 {% if ceph_osd_journal_dir is defined %}
-            --volume volume-osd-journal,kind=host,source={{ ceph_osd_journal_dir }}.{{ ceph_osd_device }} \
-            --mount volume=osd-journal,target={{ ceph_osd_journal_dir }}.{{ ceph_osd_device }} \
+           --volume volume-osd-journal,kind=host,source={{ ceph_osd_journal_dir }}.{{ ceph_osd_device }} \
+           --mount volume=volume-osd-journal,target={{ ceph_osd_journal_dir }}.{{ ceph_osd_device }} \
 {% endif %}
            --mount volume=volume-etc-ganesha,target=/etc/ganesha \
            --mount volume=volume-var-lib-ceph,target=/var/lib/ceph \
