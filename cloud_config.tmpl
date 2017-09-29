@@ -13,9 +13,11 @@ coreos:
     etcd_certfile: /etc/ssl/etcd/key.crt
     etcd_keyfile: /etc/ssl/etcd/key.key
   units:
+{% if coreos_enable_tty is defined %}
     - name: serial-getty@ttyS1.service
       command: start
       enable: true
+{% endif %}
     - name: etcd-member.service
       command: start
       enable: true
@@ -72,7 +74,6 @@ coreos:
         After=network.target etcd-member.service
 
         [Service]
-        Environment="MON_NAME={{ coreos_hostname }}"
         Environment="CEPH_PUBLIC_NETWORK={{ ceph_public_network }}"
         Environment="MON_IP={{ inventory_hostname }}"
         Environment="KV_TYPE=etcd"
