@@ -387,9 +387,11 @@ write_files:
     content: |
       {{ etcd_key|indent(width=6) }}
 
+{% set coreos_hostname_parts = coreos_hostname.split('.') %}
+
   - path: /etc/hosts
     content: |
-      127.0.0.1       localhost {{ coreos_hostname }} {% coreos_hostname.split('.')[0] %}
+      127.0.0.1       localhost {{ coreos_hostname }} {{ coreos_hostname_parts[0] }}
       ::1             localhost
 
 {% if inventory_hostname in groups['ceph'] %}
