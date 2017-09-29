@@ -392,6 +392,9 @@ write_files:
   - path: /etc/hosts
     content: |
       127.0.0.1       localhost {{ coreos_hostname }} {{ coreos_hostname_parts[0] }}
+{% for host in groups['coreos'] %}
+      {{host}}        {{ hostvars[host]['coreos_hostname'] }}
+{% endfor %}
       ::1             localhost
 
 {% if inventory_hostname in groups['ceph'] %}
