@@ -123,8 +123,8 @@ coreos:
         RemainAfterExit=yes
         ExecStart=/usr/bin/dd if=/dev/zero of=/dev/{{ ceph_osd_device }} bs=512 count=1 conv=notrunc
         ExecStart=/usr/sbin/wipefs -f /dev/{{ ceph_osd_device }}
-        ExecStart=/usr/sbin/parted -s -a opt /dev/{{ ceph_osd_device }} mklabel gpt -- mkpart primary ext4 2048s -1
-        ExecStart=/usr/sbin/parted -s /dev/{{ ceph_osd_device }} align-check optimal 1
+        # ExecStart=/usr/sbin/parted -s -a opt /dev/{{ ceph_osd_device }} mklabel gpt -- mkpart primary ext4 2048s -1
+        # ExecStart=/usr/sbin/parted -s /dev/{{ ceph_osd_device }} align-check optimal 1
     - name: ceph-osd-{{ ceph_osd_device }}.service
       command: start
       enable: true
