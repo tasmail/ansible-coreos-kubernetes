@@ -74,6 +74,7 @@ coreos:
         After=network.target etcd-member.service
 
         [Service]
+        Environment="HOSTNAME={{ coreos_hostname }}"
         Environment="CEPH_PUBLIC_NETWORK={{ ceph_public_network }}"
         Environment="MON_IP={{ inventory_hostname }}"
         Environment="KV_TYPE=etcd"
@@ -121,6 +122,7 @@ coreos:
         After=network.target etcd-member.service
 
         [Service]
+        Environment="HOSTNAME={{ coreos_hostname }}"
         Environment="CEPH_PUBLIC_NETWORK={{ ceph_public_network }}"
         Environment="KV_TYPE=etcd"
         Environment="KV_IP={{ inventory_hostname }}"
@@ -185,6 +187,7 @@ coreos:
         After=network.target etcd-member.service prepare-data-drive-{{ ceph_osd_device }}.service {% if inventory_hostname in groups['ceph-mon'] %}ceph-mon.service{% endif %}
 
         [Service]
+        Environment="HOSTNAME={{ coreos_hostname }}"
         Environment="OSD_NAME={{ ceph_osd_device }}.osd.{{ coreos_hostname }}"
         Environment="CEPH_PUBLIC_NETWORK={{ ceph_public_network }}"
         Environment="KV_TYPE=etcd"
