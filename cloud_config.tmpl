@@ -234,6 +234,7 @@ coreos:
 {% if ceph_osd_journal_create is defined and ceph_osd_journal_size is defined%}
         ExecStart=/usr/sbin/parted -s -a opt /dev/{{ ceph_osd_device }} mklabel gpt -- mkpart primary xfs 2048s {{ ceph_osd_journal_size }}MiB mkpart primary xfs {{ ceph_osd_journal_size }}MiB -1
         ExecStart=/usr/sbin/parted -s /dev/{{ ceph_osd_device }} align-check optimal 1
+        ExecStart=/usr/sbin/parted -s /dev/{{ ceph_osd_device }}2 mklabel gpt
 {% endif %}
     - name: ceph-osd-{{ ceph_osd_device }}.service
       command: start
@@ -246,7 +247,7 @@ coreos:
         [Service]
         Environment="CLUSTER={{ ceph_cluster_name }}"
         Environment="HOSTNAME={{ coreos_hostname }}"
-        Environment="OSD_NAME={{ ceph_osd_device }}.osd.{{ coreos_hostname }}"
+        Environment="OSD_NAME={{ ceph_osd_device }}-{{ coreos_hostname }}"
         Environment="CEPH_PUBLIC_NETWORK={{ ceph_public_network }}"
         Environment="KV_TYPE=etcd"
         Environment="KV_IP={{ inventory_hostname }}"
