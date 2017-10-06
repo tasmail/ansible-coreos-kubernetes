@@ -259,11 +259,18 @@ coreos:
 {% endif %}
 {% if ceph_osd_journal is defined %}
         Environment="OSD_JOURNAL={{ ceph_osd_journal }}"
-{% endif %}
 {% if ceph_osd_journal_size is defined %}
         Environment="OSD_JOURNAL_SIZE={{ ceph_osd_journal_size }}"
 {% endif %}
         Environment="OSD_DEVICE=/dev/{{ ceph_osd_device }}"
+{% else %}
+{% if ceph_osd_journal_create is defined and ceph_osd_journal_size is defined%}
+        Environment="OSD_JOURNAL=/dev/{{ ceph_osd_device }}1"
+        Environment="OSD_DEVICE=/dev/{{ ceph_osd_device }}2"
+{% else %}
+        Environment="OSD_DEVICE=/dev/{{ ceph_osd_device }}"
+{% endif %}
+{% endif %}
         EnvironmentFile=/etc/environment
         ExecStartPre=/usr/bin/mkdir -p /var/lib/ceph/mon
         ExecStartPre=/usr/bin/mkdir -p /etc/ceph
