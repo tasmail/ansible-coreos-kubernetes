@@ -231,11 +231,6 @@ coreos:
         RemainAfterExit=yes
         ExecStart=/usr/bin/dd if=/dev/zero of=/dev/{{ ceph_osd_device }} bs=512 count=1 conv=notrunc
         ExecStart=/usr/sbin/wipefs -f /dev/{{ ceph_osd_device }}
-{% if ceph_osd_journal_create is defined and ceph_osd_journal_size is defined%}
-        ExecStart=/usr/sbin/parted -s -a opt /dev/{{ ceph_osd_device }} mklabel gpt -- mkpart primary xfs 2048s {{ ceph_osd_journal_size }}MiB mkpart primary xfs {{ ceph_osd_journal_size }}MiB -1
-        ExecStart=/usr/sbin/parted -s /dev/{{ ceph_osd_device }} align-check optimal 1
-        ExecStart=/usr/sbin/parted -s /dev/{{ ceph_osd_device }}2 mklabel gpt
-{% endif %}
     - name: ceph-osd-{{ ceph_osd_device }}.service
       command: start
       enable: true
@@ -260,18 +255,11 @@ coreos:
 {% endif %}
 {% if ceph_osd_journal is defined %}
         Environment="OSD_JOURNAL={{ ceph_osd_journal }}"
+{% endif %}
 {% if ceph_osd_journal_size is defined %}
         Environment="OSD_JOURNAL_SIZE={{ ceph_osd_journal_size }}"
 {% endif %}
         Environment="OSD_DEVICE=/dev/{{ ceph_osd_device }}"
-{% else %}
-{% if ceph_osd_journal_create is defined and ceph_osd_journal_size is defined%}
-        Environment="OSD_JOURNAL=/dev/{{ ceph_osd_device }}1"
-        Environment="OSD_DEVICE=/dev/{{ ceph_osd_device }}2"
-{% else %}
-        Environment="OSD_DEVICE=/dev/{{ ceph_osd_device }}"
-{% endif %}
-{% endif %}
         EnvironmentFile=/etc/environment
         ExecStartPre=/usr/bin/mkdir -p /var/lib/ceph/mon
         ExecStartPre=/usr/bin/mkdir -p /etc/ceph
